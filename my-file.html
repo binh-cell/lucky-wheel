@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Vòng Quay May Mắn</title>
+<meta name="viewport" content="width=1200, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B1220;
+    --bg-1:#121A2E;
+    --bg-2:#182338;
+    --gold:#E7B347;
+    --gold-light:#F7D77A;
+    --red:#B23A2E;
+    --amber:#C98A2C;
+    --cream:#F3ECDD;
+    --ink:#12100B;
+    --line: rgba(231,179,71,0.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-width:1080px;
+    background:
+      radial-gradient(1200px 700px at 18% -10%, rgba(231,179,71,0.10), transparent 60%),
+      radial-gradient(900px 600px at 100% 100%, rgba(178,58,46,0.14), transparent 55%),
+      var(--bg-0);
+    color:var(--cream);
+    font-family:'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .stage{
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    gap:56px;
+    padding:56px 64px;
+    min-height:100vh;
+  }
+  /* ---------- Left: wheel ---------- */
+  .wheel-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    animation: rise .7s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .wheel-wrap{
+    position:relative;
+    width:600px;
+    height:600px;
+  }
+  .glow-ring{
+    position:absolute; inset:-28px;
+    border-radius:50%;
+    background: radial-gradient(circle at 50% 50%, rgba(231,179,71,0.16), transparent 70%);
+    filter: blur(2px);
+    pointer-events:none;
+  }
+  .bulb{
+    position:absolute;
+    width:10px; height:10px;
+    border-radius:50%;
+    background: var(--gold-light);
+    box-shadow: 0 0 8px 2px rgba(247,215,122,0.7);
+    animation: twinkle 2.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bulb{ animation:none; }
+  }
+  #canvasWheel{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    border-radius:50%;
+    will-change: transform;
+  }
+  .pointer{
+    position:absolute;
+    top:-6px; left:50%;
+    transform: translateX(-50%);
+    width:0; height:0;
+    border-left:20px solid transparent;
+    border-right:20px solid transparent;
+    border-top:34px solid var(--gold-light);
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+    z-index:5;
+  }
+  .pointer::after{
+    content:"";
+    position:absolute;
+    top:-34px; left:-14px;
+    width:28px; height:28px;
+    border-radius:50%;
+    background: var(--red);
+    border:2px solid var(--gold-light);
+  }
+  .hub-btn{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:132px; height:132px;
+    border-radius:50%;
+    border:4px solid var(--red);
+    background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold) 55%, var(--amber) 100%);
+    color:var(--ink);
+    font-family:'Anton', sans-serif;
+    font-size:26px;
+    letter-spacing:1px;
+    cursor:pointer;
+    box-shadow: 0 0 0 6px rgba(11,18,32,0.55), 0 10px 24px rgba(0,0,0,0.5);
+    transition: transform .15s ease, filter .3s ease;
+    z-index:6;
+  }
+  .hub-btn:hover{ transform:translate(-50%,-50%) scale(1.04); }
+  .hub-btn:active{ transform:translate(-50%,-50%) scale(0.97); }
+  .hub-btn:disabled{
+    cursor:not-allowed;
+    filter:grayscale(0.35) brightness(0.85);
+    transform:translate(-50%,-50%);
+  }
+  .caption{
+    margin-top:26px;
+    color:rgba(243,236,221,0.55);
+    font-size:14px;
+    letter-spacing:.02em;
+  }
+
+  /* ---------- Right: panel ---------- */
+  .panel-col{
+    flex:0 0 420px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    animation: rise .7s .1s cubic-bezier(.2,.7,.2,1) both;
+  }
+  h1{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    font-size:40px;
+    line-height:1.05;
+    margin:0 0 6px;
+    color:var(--gold-light);
+    text-shadow: 0 2px 12px rgba(231,179,71,0.25);
+  }
+  .sub{
+    margin:0 0 28px;
+    color:rgba(243,236,221,0.6);
+    font-size:15px;
+  }
+  .sub b{ color:var(--gold); font-weight:700; }
+
+  .spin-btn{
+    display:block;
+    width:100%;
+    padding:16px 20px;
+    border:none;
+    border-radius:10px;
+    background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    color:var(--ink);
+    font-family:'Anton', sans-serif;
+    font-size:20px;
+    letter-spacing:1px;
+    cursor:pointer;
+    box-shadow: 0 8px 20px rgba(231,179,71,0.22);
+    transition: transform .15s ease, box-shadow .15s ease, filter .3s ease;
+  }
+  .spin-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(231,179,71,0.32); }
+  .spin-btn:active{ transform:translateY(0); }
+  .spin-btn:disabled{
+    cursor:not-allowed;
+    filter:grayscale(0.3) brightness(0.85);
+    transform:none;
+    box-shadow:none;
+  }
+
+  .result-card{
+    margin-top:24px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background: var(--bg-1);
+    padding:22px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .result-label{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    color:rgba(243,236,221,0.5);
+  }
+  .result-number{
+    font-family:'Anton', sans-serif;
+    font-size:56px;
+    color:var(--gold-light);
+    line-height:1;
+    min-width:1.4em;
+    text-align:right;
+  }
+  .result-number.pending{ color: rgba(243,236,221,0.25); }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @keyframes twinkle{
+    0%, 100%{ opacity:.45; }
+    50%{ opacity:1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="wheel-col">
+    <div class="wheel-wrap" id="wheelWrap">
+      <div class="glow-ring"></div>
+      <canvas id="canvasWheel"></canvas>
+      <div class="pointer"></div>
+      <button class="hub-btn" id="hubBtn" title="Quay">QUAY</button>
+    </div>
+    <div class="caption">Bấm vào tâm bánh xe hoặc nút “Quay ngay” để bắt đầu</div>
+  </div>
+
+  <div class="panel-col">
+    <h1>Vòng Quay<br>May Mắn</h1>
+    <p class="sub">Số từ <b>1</b> đến <b>44</b>, — tổng cộng <b id="countLabel">43</b> số.</p>
+
+    <button class="spin-btn" id="spinBtn">QUAY NGAY</button>
+
+    <div class="result-card">
+      <span class="result-label">Kết quả</span>
+      <span class="result-number pending" id="resultNumber">--</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- data ----------
+  const EXCLUDE = 6;
+  const numbers = [];
+  for(let i=1;i<=44;i++){ if(i!==EXCLUDE) numbers.push(i); }
+  const count = numbers.length;
+
+  // ---------- tỉ lệ (chỉnh trực tiếp ở đây) ----------
+  // Mặc định mọi số có tỉ lệ bằng nhau (giá trị 1).
+  // Muốn số nào ra nhiều/ít hơn, khai báo trong CUSTOM_WEIGHTS bên dưới,
+  // ví dụ: { 7: 3, 13: 0.5, 44: 0 }  => số 7 gấp 3 lần, số 13 giảm còn nửa,
+  // số 44 tỉ lệ 0 (không bao giờ ra). Số không khai báo mặc định là 1.
+  const CUSTOM_WEIGHTS = {
+    // 7: 3,
+  };
+  const weights = numbers.map(n => (n in CUSTOM_WEIGHTS ? CUSTOM_WEIGHTS[n] : 1));
+
+  document.getElementById('countLabel').textContent = count;
+
+  // ---------- canvas wheel ----------
+  const canvas = document.getElementById('canvasWheel');
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const SIZE = 600;
+  canvas.width = SIZE * DPR;
+  canvas.height = SIZE * DPR;
+  ctx.scale(DPR, DPR);
+
+  const cx = SIZE/2, cy = SIZE/2, R = SIZE/2 - 10;
+  const colorA = '#B23A2E';
+  const colorB = '#C98A2C';
+  const sliceRad = (Math.PI*2) / count;
+
+  function drawWheel(highlightIdx){
+    ctx.clearRect(0,0,SIZE,SIZE);
+
+    for(let i=0;i<count;i++){
+      const start = -Math.PI/2 + i*sliceRad;
+      const end = start + sliceRad;
+
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,R,start,end);
+      ctx.closePath();
+      ctx.fillStyle = (typeof highlightIdx==='number' && highlightIdx===i)
+        ? '#F7D77A'
+        : (i % 2 === 0 ? colorA : colorB);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(11,18,32,0.55)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      // label
+      const mid = start + sliceRad/2;
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(mid);
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = (typeof highlightIdx==='number' && highlightIdx===i) ? '#12100B' : '#F3ECDD';
+      ctx.font = "600 15px 'Manrope', sans-serif";
+      const label = String(numbers[i]).padStart(2,'0');
+      ctx.fillText(label, R - 14, 1);
+      ctx.restore();
+    }
+
+    // rim
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,0,Math.PI*2);
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#E7B347';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx,cy,R-9,0,Math.PI*2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(11,18,32,0.6)';
+    ctx.stroke();
+  }
+  drawWheel();
+
+  // decorative bulbs around rim
+  const wrap = document.getElementById('wheelWrap');
+  const bulbCount = 24;
+  for(let i=0;i<bulbCount;i++){
+    const angle = (i / bulbCount) * Math.PI * 2;
+    const bx = 300 + Math.cos(angle) * 292;
+    const by = 300 + Math.sin(angle) * 292;
+    const b = document.createElement('div');
+    b.className = 'bulb';
+    b.style.left = bx + 'px';
+    b.style.top = by + 'px';
+    b.style.animationDelay = (i * 0.11) + 's';
+    wrap.appendChild(b);
+  }
+
+  // ---------- spin logic ----------
+  const spinBtn = document.getElementById('spinBtn');
+  const hubBtn = document.getElementById('hubBtn');
+  const resultEl = document.getElementById('resultNumber');
+
+  let spinning = false;
+  let currentRotation = 0;
+  let pendingWinnerIdx = null;
+
+  function pickWeightedIndex(){
+    const total = weights.reduce((a,b) => a+b, 0);
+    if(total <= 0) return null;
+    let r = Math.random() * total;
+    for(let i=0;i<count;i++){
+      r -= weights[i];
+      if(r <= 0) return i;
+    }
+    return count - 1;
+  }
+
+  function setSpinning(state){
+    spinning = state;
+    spinBtn.disabled = state;
+    hubBtn.disabled = state;
+    spinBtn.textContent = state ? 'ĐANG QUAY…' : 'QUAY NGAY';
+  }
+
+  function spin(){
+    if(spinning) return;
+
+    const winnerIdx = pickWeightedIndex();
+    if(winnerIdx === null){
+      resultEl.textContent = '—';
+      resultEl.classList.add('pending');
+      alert('Tất cả tỉ lệ đang bằng 0. Vui lòng đặt lại ít nhất một số lớn hơn 0.');
+      return;
+    }
+
+    pendingWinnerIdx = winnerIdx;
+    setSpinning(true);
+    resultEl.classList.add('pending');
+
+    const sliceDeg = 360 / count;
+    const centerDeg = winnerIdx * sliceDeg + sliceDeg / 2;
+    const jitter = (Math.random() * 2 - 1) * (sliceDeg * 0.32);
+    const target = centerDeg + jitter;
+
+    const currentMod = ((currentRotation % 360) + 360) % 360;
+    const neededMod = ((360 - target) % 360 + 360) % 360;
+    let delta = neededMod - currentMod;
+    if(delta <= 0) delta += 360;
+
+    const extraSpins = 6 + Math.floor(Math.random() * 3); // 6-8 full turns
+    currentRotation += extraSpins * 360 + delta;
+
+    canvas.style.transition = 'transform 5.2s cubic-bezier(0.12,0.67,0.15,1)';
+    canvas.style.transform = 'rotate(' + currentRotation + 'deg)';
+  }
+
+  canvas.addEventListener('transitionend', (e) => {
+    if(e.propertyName !== 'transform') return;
+    setSpinning(false);
+    if(pendingWinnerIdx !== null){
+      const value = numbers[pendingWinnerIdx];
+      resultEl.textContent = String(value).padStart(2,'0');
+      resultEl.classList.remove('pending');
+      drawWheel(pendingWinnerIdx);
+      pendingWinnerIdx = null;
+    }
+  });
+
+  spinBtn.addEventListener('click', spin);
+  hubBtn.addEventListener('click', spin);
+})();
+</script>
+
+</body>
+</html>
