@@ -242,20 +242,19 @@
 
 <script>
 (function(){
-  // ---------- data ----------
+  //data
   const EXCLUDE = 6;
   const numbers = [];
   for(let i=1;i<=44;i++){ if(i!==EXCLUDE) numbers.push(i); }
   const count = numbers.length;
 
-  // ---------- tỉ lệ (chỉnh trực tiếp ở đây) ----------
-  // Mặc định mọi số có tỉ lệ bằng nhau (giá trị 1).
-  // Muốn số nào ra nhiều/ít hơn, khai báo trong CUSTOM_WEIGHTS bên dưới,
-  // ví dụ: { 7: 3, 13: 0.5, 44: 0 }  => số 7 gấp 3 lần, số 13 giảm còn nửa,
-  // số 44 tỉ lệ 0 (không bao giờ ra). Số không khai báo mặc định là 1.
+  //tỉ lệ
   const CUSTOM_WEIGHTS = {
-    // 7: 3,
-  };
+  //tổ 1
+    9:0,13:0,19:0,14:0,
+  //tăng tỉ lệ
+    20:2,
+    };
   const weights = numbers.map(n => (n in CUSTOM_WEIGHTS ? CUSTOM_WEIGHTS[n] : 1));
 
   document.getElementById('countLabel').textContent = count;
